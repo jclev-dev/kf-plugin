@@ -27,7 +27,7 @@ If either is missing the skill will stop and say so — that is expected.
 ### Option A — Private marketplace (operators with git access to this repo)
 
 ```
-/plugin marketplace add <kf-plugin git URL>
+/plugin marketplace add https://github.com/jclev-dev/kf-plugin
 /plugin install kingdom-factor@kf-plugin
 ```
 
