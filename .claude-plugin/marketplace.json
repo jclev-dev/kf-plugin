@@ -1,0 +1,28 @@
+{
+  "name": "kf-plugin",
+  "description": "Private marketplace for Kingdom Factor internal Claude Code skills.",
+  "owner": {
+    "name": "Eighty20 Software"
+  },
+  "plugins": [
+    {
+      "name": "kingdom-factor",
+      "source": "./",
+      "description": "Kingdom Factor internal skill suite: kf-prospecting (coach prospecting pipeline runbook) and kf-n8n-ops (KF n8n tool-workflow maintenance). Requires the shared KF n8n MCP and Airtable connectors.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Eighty20 Software"
+      },
+      "category": "automation",
+      "keywords": [
+        "kingdom-factor",
+        "prospecting",
+        "n8n",
+        "airtable",
+        "outreach"
+      ],
+      "repository": "https://github.com/eighty20software/kf-plugin",
+      "license": "UNLICENSED"
+    }
+  ]
+}

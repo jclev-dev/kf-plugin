@@ -1,0 +1,18 @@
+{
+  "name": "kingdom-factor",
+  "version": "0.1.0",
+  "description": "Kingdom Factor internal skill suite. Includes kf-prospecting (the coach prospecting pipeline runbook — scrape, fit, research, outreach, email verification, GoHighLevel/Instantly push, driven against the shared KF n8n + Airtable) and kf-n8n-ops (maintaining the KF n8n tool workflows).",
+  "author": {
+    "name": "Eighty20 Software"
+  },
+  "repository": "https://github.com/eighty20software/kf-plugin",
+  "license": "UNLICENSED",
+  "keywords": [
+    "kingdom-factor",
+    "prospecting",
+    "n8n",
+    "airtable",
+    "automation",
+    "outreach"
+  ]
+}
