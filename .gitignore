@@ -9,3 +9,6 @@ Thumbs.db
 # Local scratch — never commit run artifacts or operator-side learnings
 *.local
 /tmp/
+
+# Planning/brainstorm artifacts — internal, never published
+/docs/
