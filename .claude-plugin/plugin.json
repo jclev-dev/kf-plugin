@@ -1,7 +1,7 @@
 {
   "name": "kingdom-factor",
-  "version": "0.1.0",
-  "description": "Kingdom Factor internal skill suite. Includes kf-prospecting (the coach prospecting pipeline runbook — scrape, fit, research, outreach, email verification, GoHighLevel/Instantly push, driven against the shared KF n8n + Airtable) and kf-n8n-ops (maintaining the KF n8n tool workflows).",
+  "version": "0.2.0",
+  "description": "Kingdom Factor internal skill suite. Includes kf-prospecting (the coach prospecting pipeline runbook — scrape, fit, research, outreach, email verification, GoHighLevel/Instantly push, driven against the shared KF n8n + Airtable), kf-n8n-ops (maintaining the KF n8n tool workflows), and kf-marketing-manager (plain-English coach marketing reports via a bundled read-only kingdom-factor connector).",
   "author": {
     "name": "Eighty20 Software"
   },
@@ -13,6 +13,8 @@
     "n8n",
     "airtable",
     "automation",
-    "outreach"
+    "outreach",
+    "marketing",
+    "gohighlevel"
   ]
 }
