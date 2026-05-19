@@ -8,7 +8,8 @@ description: >-
   "how did outreach go last quarter", "compare her to last month", "list the
   stalled deals" — even if they don't name this skill. Answers in non-marketer
   language with grounded, data-specific tips, reading exclusively through the
-  kf-marketing connector (synced GoHighLevel data in the kingdom-factor app).
+  kingdom-factor remote connector (synced GoHighLevel data in the
+  kingdom-factor app; access is scoped to the signed-in user's KF role).
   READ & ADVISE ONLY — it never writes to GoHighLevel or the app.
 ---
 
@@ -29,7 +30,7 @@ plain-English synthesis, tips, and visuals are **your** job.
 ```
 owner asks in plain language
   └─ you pick a tool (portfolio_summary | coach_report | resolve_coach)
-       └─ kf-marketing connector ─► kingdom-factor /api/marketing (read-only)
+       └─ kingdom-factor remote MCP connector (OAuth, read-only, role-scoped)
             └─ you translate metrics ─► plain-English summary + ONE next action
                  └─ optional simple inline widget ─► answer follow-ups
 ```
@@ -40,9 +41,10 @@ owner asks in plain language
 
 ## When you start, read the references in this order
 
-1. `references/setup.md` — the connector preflight. If the `kf-marketing`
-   connector is missing or unconfigured, **stop and say so**. Never try to
-   reach GoHighLevel directly — there is no such path and it is forbidden.
+1. `references/setup.md` — the connector preflight. If the kingdom-factor
+   connector is missing or the user isn't signed in, **stop and say so**.
+   Never try to reach GoHighLevel directly — there is no such path and it is
+   forbidden.
 2. `references/tool-surface.md` — the three read tools, their parameters, and
    the exact response shape you will translate.
 3. `references/report-definitions.md` — what the three report areas mean,
@@ -71,10 +73,14 @@ owner asks in plain language
   no moving opportunities, no edits of any kind. The owners cannot sanity-check
   AI-driven CRM mutations, so writes are deferred entirely. The connector
   exposes only read tools; there is no write path and you must not invent one.
-- **Only reach data through the `kf-marketing` connector.** Never authenticate
+- **Only reach data through the kingdom-factor connector.** Never authenticate
   to GoHighLevel, call its API, or use any other GHL connector. If the
-  connector is unreachable, say you cannot reach the data source and stop
+  connector is unreachable or the user isn't signed in, say so and stop
   (`references/setup.md`). Do not "work around" it.
+- **Respect role scoping.** A non-admin coach can only see their own
+  marketing; the connector enforces this. When one asks about another coach
+  or the whole roster, explain that plainly and offer their own report —
+  never treat the "Not authorized" response as an error to bypass.
 - **Never present a number without its freshness.** Every answer states how old
   the data is ("pipeline data as of ~3 hours ago"). In v1 nothing is a live
   figure; never imply real-time.
@@ -87,8 +93,8 @@ owner asks in plain language
 
 ## Operating loop (detail in the references)
 
-1. Confirm the connector (`references/setup.md`). If absent/unconfigured, stop
-   with the exact message there.
+1. Confirm the connector (`references/setup.md`). If absent or the user isn't
+   signed in, stop with the exact message there.
 2. Read the owner's question. Resolve the time window from their words; default
    to **the last 30 days** and say so when you defaulted
    (`references/report-definitions.md`).

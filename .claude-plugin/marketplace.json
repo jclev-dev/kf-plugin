@@ -8,8 +8,8 @@
     {
       "name": "kingdom-factor",
       "source": "./",
-      "description": "Kingdom Factor internal skill suite: kf-prospecting (coach prospecting pipeline runbook), kf-n8n-ops (KF n8n tool-workflow maintenance), and kf-marketing-manager (plain-English coach marketing reports). Requires the shared KF n8n MCP + Airtable connectors; kf-marketing-manager additionally uses the bundled read-only kingdom-factor connector.",
-      "version": "0.2.0",
+      "description": "Kingdom Factor internal skill suite: kf-prospecting (coach prospecting pipeline runbook), kf-n8n-ops (KF n8n tool-workflow maintenance), and kf-marketing-manager (plain-English coach marketing reports). Requires the shared KF n8n MCP + Airtable connectors; kf-marketing-manager uses the kingdom-factor app's hosted OAuth-protected remote MCP connector (added per-user in the Claude app).",
+      "version": "0.3.0",
       "author": {
         "name": "Eighty20 Software"
       },

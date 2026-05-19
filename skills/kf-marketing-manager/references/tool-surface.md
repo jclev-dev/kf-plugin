@@ -1,7 +1,20 @@
 # Connector Tool Surface
 
-Three **read-only** tools. None of them write anything. All windows default
-to the last 30 days when no window args are sent.
+Three **read-only** tools, served by the kingdom-factor app's remote MCP
+endpoint (`https://kingdomfactor.us/mcp`). None of them write anything. All
+windows default to the last 30 days when no window args are sent.
+
+**Role scoping is enforced server-side** (the connector authenticates the
+*user* via their Kingdom Factor OAuth login):
+
+- **KF admin** → `portfolio_summary` (full roster), `coach_report` for any
+  coach, `resolve_coach` across all coaches.
+- **Non-admin coach** → `coach_report` returns only **their own** report (any
+  `coach_ref` they pass is ignored by design); `resolve_coach` returns only
+  themselves; `portfolio_summary` is denied. This is correct behavior — when
+  a coach asks about someone else, explain they can only see their own
+  marketing here and offer their own report.
+- Anyone else → all tools denied.
 
 ## `portfolio_summary`
 
@@ -32,9 +45,9 @@ Response:
 
 ## `coach_report`
 
-Deep dive for ONE coach (any coach, enrolled or not). Params: `coach_ref`
-(**required** — account id, or a unique name/email fragment), plus the same
-optional window args.
+Deep dive for ONE coach. Params: `coach_ref` (account id or unique
+name/email fragment — **admins only**; ignored for a non-admin coach, who
+always gets their own report), plus the same optional window args.
 
 Response adds `movement` and a fuller `health`:
 
@@ -69,17 +82,19 @@ Disambiguation. Param: `query` (**required**, name/email fragment).
                  "marketing_active": true, "ghl_location_id": "..." } ] }
 ```
 
-## Error envelope
+## Errors
 
-A failed call comes back as an error result whose text starts with
-`kf-marketing request failed: HTTP <status>` (or `could not reach …`):
+Failures come back as MCP **error tool responses** (an `isError` result whose
+text carries the message) or, for transport/auth, an HTTP/JSON-RPC error:
 
-| Status | Meaning | What you do |
+| Signal | Meaning | What you do |
 |---|---|---|
-| 300 | Name matched multiple coaches | Call `resolve_coach`, ask the owner which one |
-| 401 | Wrong/missing shared key | Setup gap — see `setup.md`, stop |
-| 404 | No such coach | Tell the owner you couldn't find that coach; offer `resolve_coach` |
-| 429 | Rate limited | Wait, retry once, then report |
-| 5xx / could not reach | App down | Say you can't reach the data source; stop |
+| `Not authorized: …admins (full roster) and coaches (their own marketing only)` | Role scoping — expected, not a bug | Explain the user can only see what their role allows; offer their own report if they're a coach |
+| `No coach found for that reference.` | `coach_report` ref didn't match (admin) | Tell the owner; offer `resolve_coach` |
+| `{ "error": "ambiguous", "matches": [...] }` (admin only) | Name matched multiple coaches | Show the matches, ask which one, retry with the id |
+| `invalid_token` / 401 + `WWW-Authenticate` | Not signed in / token expired | Tell the user to (re-)connect the connector and complete the KF login (`setup.md`), then retry |
+| `insufficient_scope` | OAuth client missing `marketing.read` | Setup gap — a KF admin re-registers the client (`setup.md`); stop |
+| cannot reach / 5xx | App down | Say you can't reach the data source; stop |
 
-Never swallow an error or fabricate numbers when one occurs.
+Never swallow an error or fabricate numbers when one occurs. Never attempt to
+reach GoHighLevel directly on any failure.
