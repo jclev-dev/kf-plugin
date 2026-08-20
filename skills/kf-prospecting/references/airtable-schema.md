@@ -1,7 +1,7 @@
 # Airtable Schema — the source of truth
 
-Base: **`appB3GpIQaGaRVrsC`** ("Kingdom Factor"). You own this. Every interpretive
-write goes through you, after cleaning.
+Base: **`appB3GpIQaGaRVrsC`** ("Kingdom Factor"). The n8n pipeline writes it;
+the console reads it and repairs single rows.
 
 ## Tables
 
@@ -12,11 +12,10 @@ write goes through you, after cleaning.
 | Offers | `tblj6HFpCiypNi3IG` | The outreach voice/rules prompt |
 | Coaches | `tbllQP1eqA7VMGlUm` | Push targets (GHL location, Instantly campaign, identity) |
 
-## The four prompt-source fields — READ THESE EVERY RUN, never hardcode
+## The prompt-source fields — the team tunes judgment here
 
-The team tunes the pipeline's judgment by editing these Airtable fields. If you
-bake criteria into your own reasoning instead of reading them, the team loses
-control and the pipeline silently drifts from what they intend.
+The pipeline's Claude nodes read these at run time; quote them when explaining
+a fit or a draft.
 
 | What you need | Read from | Used for |
 |---|---|---|
@@ -32,54 +31,24 @@ Coaches fields you need for the push stage: **`CRM ID`** (this is the
 GoHighLevel locationId), **`Instantly Campaign ID`**, **`First Name`**,
 **`Full Name`**, **`City`**, **`State`**.
 
-## The Status state machine (Prospects `Status`)
+## Status, Attention Reason, Re-run
 
-This single field is what makes runs resumable. Always read it first and resume
-each row from where it is — never blindly restart a row that's already advanced.
+`Status` is written by the pipeline; the full map is in `pipeline.md`. Two
+columns added for the console (Aug 2026):
 
-```
-New ──scrape──► Scraped ──fit──► Fit Assessed ──research?──► Researched
-                   │                                            │
-                   └─(Apify miss)─► LI Not Found                 ▼
-                                              ──outreach──► Ready for Review
-                                                                 │
-                                              ──verify+push──►  Approved        (Email path)
-                                                              │
-                                                              └► CRM LI Outreach (LinkedIn path)
-```
+- **`Attention Reason`** (long text) — plain-English reason a row is at
+  `Needs Attention`. Cleared at the start of a re-run.
+- **`Re-run`** (checkbox) — tick after fixing a row; the re-run webhook picks up
+  every ticked row for the coach, clears the tick, and resumes from the right
+  stage (no re-scrape when profile data exists).
 
-Other status/stage fields you write:
+Other status fields the pipeline writes:
 
 - **`Fit Status`**: `Good Fit` | `Not a Fit` | `Needs Review`
 - **`Email Status`**: `Safe` | `Catch All` | `Disposable` | `Invalid` | `Unknown`
-  (older rows may show `Valid`/`Accept All`; treat semantically, see stages.md)
+  (older rows may show `Valid`/`Accept All`)
 - **`Research Confidence`**: `High` | `Medium` | `Low`
 - **`Recommended Channel`**: `Email` | `LinkedIn`
 - **`Instantly Status`**: `Not Sent` … `Active` … `Completed`
 
-## Prospects fields you write, by stage
-
-- **Create (Status=New):** `LinkedIn URL`, `Seamless Email` (from CSV email
-  column), `Coach` (link), `Campaign` (link), `Status="New"`.
-- **After scrape (Status=Scraped | LI Not Found):** `First Name`, `Last Name`,
-  `LI Scrape Email`, `Phone`, `Location`, `Headline`, `Job Title`, `Company`,
-  `Company Industry`, `Company Size`, `Company Website`, `Time in Role`,
-  `LinkedIn Signals` (JSON: connections, followers, isPremium, isVerified,
-  openConnection, isJobSeeker, isCreator, isInfluencer, totalExperienceYears,
-  firstRoleYear), `About`, `Career History`, `Skills`, `Education`,
-  `Recommendations`, `Volunteer`, `Publications`.
-- **After fit (Status=Fit Assessed):** `Fit Status`, `Fit Reasoning`.
-- **After research (Status=Researched):** `Web Research`,
-  `Web Research (Unverified)`, `Research Confidence`.
-- **After outreach (Status=Ready for Review):** `Recommended Channel`,
-  `Channel Reasoning`, `Personalization Hooks`, `LinkedIn Connection Message`,
-  `Draft Email`, `Draft Direct Message`, and the linked `Offer`.
-  - The legacy flow hardcoded `Offer = ["recgVGMZxVsYxjr5f"]`. Do **not** copy
-    that blindly — set `Offer` to the Offer actually linked from the Campaign.
-- **After verify:** `Email` (the chosen, usable address), `Email Status`.
-- **After push (Email path, Status=Approved):** `Instantly Lead ID`,
-  `Instantly Status="Active"`, `Instantly Last Event` (now), `CRM ID` (the GHL
-  contact id returned).
-- **After push (LinkedIn path, Status=CRM LI Outreach):** `CRM ID`.
-
-Next: `references/tools.md`.
+Field-by-stage detail: `pipeline.md`.

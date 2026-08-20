@@ -1,106 +1,72 @@
 ---
 name: kf-n8n-ops
 description: >-
-  Diagnose, repair, validate, or recreate the three Kingdom Factor n8n tool
-  workflows that the kf-prospecting pipeline depends on (Verify Email, GHL Push
-  Contact, Instantly Add Lead). Use this whenever a KF tool call fails or
-  misbehaves — "GHL push is erroring", "verify email returns nothing", "the
-  prospecting run can't reach the n8n tools", "recreate the KF n8n tools", "a
-  tool isn't showing up in MCP", or any auth/credential/availability problem
-  with the KF tool workflows. Also use before first-run setup to confirm the
-  three workflows are activated, MCP-exposed, and credentialed. Requires the KF
-  n8n MCP connector. Does **not** cover LinkedIn scraping — that no longer runs
-  through n8n; it calls the Apify Actor directly (see kf-prospecting).
+  Maintain the Kingdom Factor n8n pipeline workflow "Run prospect pipeline"
+  (NOkpnPIxM3XG7ZXA) and the push tools behind the Airtable Queue. Use when the
+  form does not trigger, a run errors, a credential expires (Apify, Reoon,
+  OpenRouter, Gmail, Airtable), a coach must be added to the upload form, the
+  Claude model or prompts in the pipeline need changing, or the workflow must be
+  published / rolled back. Requires the KF n8n MCP. For "what is stuck and
+  why" questions use kf-prospecting instead.
 ---
 
-# KF n8n Tool Ops
+# KF n8n ops
 
-Operational skill for keeping the three `KF Tool:` n8n workflows healthy. These
-are the only n8n workflows `kf-prospecting` calls. This skill does **not** run
-the prospecting pipeline — it keeps its tools working.
+Keeps the pipeline workflow healthy. Operators never open n8n; you do.
 
-**Scraping is out of scope.** `KF Tool: Scrape LinkedIn` (`8lCOtgzuFSE5rSUE`)
-is retired and deactivated; `kf-prospecting` now calls the Apify Actor
-`dev_fusion/linkedin-profile-scraper` directly through the Apify MCP connector.
-A scrape problem is an Apify or connector problem, never an n8n one — do not
-diagnose, repair, or reactivate that workflow.
+## The workflows that matter
 
-## The three tool workflows
-
-| Tool | Workflow ID | Calls |
+| Workflow | ID | Role |
 |---|---|---|
-| KF Tool: Verify Email | `V0EoKHXbdmk7g6au` | Reoon `emailverifier.reoon.com` |
-| KF Tool: GHL Push Contact | `otarDiS3anrAKzaC` | GHL locationToken → contacts/upsert → notes |
-| KF Tool: Instantly Add Lead | `BwbeD81BHGyz7fbh` | Instantly `lead/addToCampaign` |
+| Run prospect pipeline | `NOkpnPIxM3XG7ZXA` | **The engine.** Form + re-run webhook → scrape → Claude clean/fit → Reoon → Claude draft → report. One execution per batch |
+| Airtable Manual Queue | `vSI2AE6gFxxFhbl9wgID-` | Behind the Airtable `Queue` field. Live actions: *Research Prospect*, *Add to Instantly*, *CRM LI Connection*. *Scrape / Assess Fit / Generate Outreach* are neutered (they only clear the Queue) |
+| ♻️ Record Reviewed | `cudlW2E-ajmv446eFM-Hy` | Sends approved rows (Instantly / GHL). Called by Manual Queue |
+| KF Tool: GHL Push Contact / Instantly Add Lead | `otarDiS3anrAKzaC` / `BwbeD81BHGyz7fbh` | Push tools, still valid, called by humans-approved paths only |
+| ⚠️ Error Workflow | `OhoE8r8UPAccmokjSorGB` | Receives every failed execution of the pipeline |
 
-Every tool returns one envelope — always parse it, never assume success:
+Retired, keep unpublished: `KF Tool: Verify Email` (`V0EoKHXbdmk7g6au`),
+`KF Tool: Scrape LinkedIn` (`8lCOtgzuFSE5rSUE`), legacy `LI Prospect
+Scraping` (`H8qdEFvCWM7GC0VBgs35Y`, the old `contacts-upload` form),
+`♻️ Prospect Fit`, `♻️ Outreach Generation`.
 
-```json
-{ "ok": <bool>, "data": <payload|null>,
-  "error": { "step": "<string>", "http_status": <number|null>,
-             "message": "<string>", "body": <raw|null> } }
-```
+## Credentials the pipeline binds (n8n credential store only)
 
-`ok:false` with `http_status` 429 or 5xx → transient (retry/backoff is the
-caller's job). 4xx (esp. 401/403) → almost always an unattached or wrong
-credential, not a code bug. A null `http_status` with a clear message → inspect
-`error.step` to localize (for GHL: `token` | `upsert` | `note`).
+| Node | Credential | Symptom when broken |
+|---|---|---|
+| Airtable nodes (9) | `Airtable: KF Access Token` `ZgE5guZzmTHq7jdG` | 401/403 on the first Airtable node |
+| Apify: scrape batch | `Apify: KF Token` `QpZAvL0bT663AITz` (httpQueryAuth) | whole batches `Needs Attention` "Apify scrape call failed" |
+| Reoon: verify email | `KF: Reoon` `v4mnEAmfrzCkXYeC` (httpQueryAuth) | `Email Status` Unknown for every Good Fit |
+| Claude (clean + fit), Claude (draft) | `OpenRouter: KF` `4j0MyAaOoAFtR1yt`, model `anthropic/claude-sonnet-4.6` | rows `Needs Attention` "AI … step failed" |
+| Email run report | `KF Admin Gmail` `8TYukFYou7dHRTdg` | no report email; execution ends in error at the last node |
 
-## First triage — before touching the workflow
+HTTP Request nodes are skipped by credential auto-assignment: after any
+recreate, bind Apify and Reoon with `setNodeCredential`.
 
-1. **Is the workflow active and MCP-exposed?** Via the n8n MCP, confirm the
-   workflow exists, is active, and is "Available in MCP". A tool that "isn't
-   showing up" is usually inactive or not MCP-exposed, not broken.
-2. **Auth error (401/403, or `error.step: token` for GHL)?** A credential is
-   unattached or wrong. The n8n API cannot set credentials — they are attached
-   manually in the n8n UI. Required attachments:
-   - Verify Email → **Reoon** httpQueryAuth (`v4mnEAmfrzCkXYeC`)
-   - GHL Push Contact (Get Location Token / Upsert Contact / Create Note) →
-     **GoHighLevel** OAuth (`9gatP0eYzl6hugXl`)
-   - Instantly Add Lead → **Instantly** (`Instantly: KF`)
-   Report the specific node + credential as a setup gap; do not retry blindly.
-3. **Transient (429/5xx)?** Not a workflow defect. Confirm by re-running once;
-   advise the caller's backoff rather than editing the workflow.
-4. **Bad/empty `data` but `ok:true`?** The upstream API shape may have drifted
-   (e.g. Apify field renamed, Reoon status string changed). Inspect `error`/raw
-   and the upstream node’s response; record the drift in the kf-prospecting
-   operator-side learnings so the pipeline’s cleaning logic adapts. (Apify field
-   drift is no longer an n8n concern — it surfaces directly in kf-prospecting.)
+## Routine tasks
 
-## Inspecting / validating a workflow
-
-Use the n8n MCP read + validate tools (get workflow details, validate workflow).
-**Consult the `n8n-mcp-skills` plugin first** (`n8n-mcp-tools-expert`,
-`n8n-validation-expert`, `n8n-node-configuration`, `n8n-expression-syntax`) — it
-documents correct nodeType formats, parameter structures, and validation flow
-and prevents the common mistakes. If that plugin is not installed, recommend
-installing it before deep node-level work.
-
-## Recreating a tool workflow
-
-If a tool is damaged beyond a quick fix, rebuild it as a **new** workflow — do
-not repair in place under time pressure and do not touch the originals.
-
-- Each tool is a pure function: an `executeWorkflowTrigger` ("When Executed by
-  Another Workflow") with declared inputs → the external call(s) → a final Code
-  node that emits the `{ok,data,error}` envelope. Every external node sets
-  `onError: continueRegularOutput` so the workflow never hard-fails.
-- The exact per-tool input schema, endpoints, headers, and body shapes live in
-  the `kf-prospecting` skill's `references/tools.md` — treat that as the
-  contract; anything you rebuild must match it so the pipeline keeps working.
-- Mirror an existing healthy `KF Tool:` workflow's trigger/credential/node
-  shapes. Build with the `n8n-mcp-skills` guidance, `validate_workflow` until
-  clean, leave it inactive, then have the operator activate + attach credentials
-  + enable "Available in MCP", and update the ID in `references/tools.md` (cut a
-  new plugin version).
+- **Diagnose a failed run.** `search_workflow_executions` (workflowId above,
+  status error) → `get_workflow_execution` with `includeData` and `nodeNames`
+  for the suspect node only. Map the node to the operator-facing cause in
+  `kf-prospecting/references/pipeline.md`.
+- **Add a coach to the form.** `setNodeParameter` on `Prospect upload form`,
+  path `/formFields/values/1/fieldOptions/values` — the option text must equal
+  `Coaches.Full Name` exactly (the lookup is `{Full Name} = '<option>'`).
+  Publish after.
+- **Change a prompt or model.** Prompts are the `text` and `messages` params of
+  `Clean and assess fit` / `Draft outreach`; the model is the `model` param of
+  the two OpenRouter subnodes. To move to a direct Anthropic key: add an
+  Anthropic credential in n8n, replace each OpenRouter subnode with
+  `@n8n/n8n-nodes-langchain.lmChatAnthropic`, reconnect `ai_languageModel`.
+- **Publish / roll back.** `publish_workflow`; versions carry names and
+  descriptions — `get_workflow_history` → `restore_workflow_version`.
+- **Every edit:** `validate_workflow` → `get_workflow_details` (check
+  `connections`) → `test_workflow` with pinned data for external nodes →
+  publish. Node groups must be cleared (`setNodeGroups: []`) before rewiring
+  nodes that belong to a group, then re-applied.
 
 ## Hard boundaries
 
-- **Never modify, activate, or call the 6 original legacy workflows**
-  (`H8qd…`, `JAzS…`, `VVnh…`, `xBrZ…`, `iZgp…`, `cudl…`). They are the
-  preserved fallback.
-- **Never embed credentials** in a workflow, prompt, or file — they live only in
-  n8n's credential store, attached via the UI.
-- Changes to a tool's input/output contract must be reflected in
-  `kf-prospecting/references/tools.md` and shipped as a new plugin version, or
-  the pipeline and the tool will silently disagree.
+- Never put a secret in a workflow, prompt, or this repo.
+- Never re-enable the retired workflows as a "fallback" (ADR 0001, ADR 0002).
+- Per-prospect tool calls from a chat session are the anti-pattern this
+  workflow replaced; do not add MCP-callable per-row tools back.

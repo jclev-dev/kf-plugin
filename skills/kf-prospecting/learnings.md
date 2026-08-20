@@ -5,41 +5,31 @@
 > update, so **do not write here at runtime** — anything added would be lost.
 > Run-discovered learnings go in the operator-side file
 > `kf-prospecting-learnings.local.md` in the run's working directory (see
-> `references/setup.md` §6). Read this seed *and* that file at the start of
+> SKILL.md "Rules"). Read this seed *and* that file at the start of
 > every run; append only to the operator-side file.
 
 This seed captures the patterns known at packaging time. Keep entries short: the
 pattern, how to recognize it, what to do.
 
-## Seeded from the legacy n8n system (known brittle spots it had)
+## Seed (known data quirks — useful when explaining a row to the operator)
 
-These are the exact places the old deterministic workflow broke. You handle them
-with judgment now — but knowing the shapes speeds you up.
-
-- **LinkedIn URL forms** — Apify may return a different URL form than the CSV
-  supplied: vanity vs numeric IDs, locale subdomains (`de.linkedin.com`,
-  `uk.linkedin.com`), `?miniProfileUrn=` / tracking params, trailing slashes,
-  missing `https://`/`www.`. Match by the stable slug after `/in/`, lowercased,
-  param-stripped — but verify by name/company, not slug alone.
-- **Company size** — Apify returns inconsistent strings (`"2-10"`, `"10001-0"`,
-  `"10,001+ employees"`, localized text). The old `mapCompanySize` returned
-  `null` on anything unmapped. Instead: infer the right bucket from the numbers;
-  only flag if truly unparseable.
-- **Oversized profiles** — long `recommendations`/`experiences` arrays. The old
-  `safeStringify` hard-capped at 90,000 chars and recursively halved arrays,
-  silently dropping data. Summarize meaningfully instead; never chop
-  mid-structure.
-- **Reoon status drift** — the gate previously required the literal string
-  `safe`. Real Reoon statuses include `safe`, `catch_all`, `disposable`,
-  `invalid`, `role_account`, `spamtrap`, `unknown`. Map by meaning (see
-  stages.md Stage 5), and watch for underscores vs spaces / title-casing.
-- **Missing email + GHL** — GHL upsert fails without an `email`. The tool
-  fabricates `firstname_lastname@noemail.com.invalid` and returns
-  `email_fabricated:true`. That is expected and correct for GHL; just never let
-  that address reach Instantly or be treated as real.
-- **Airtable `Email Status` enum drift** — some older rows use `Valid`/`Accept
-  All` where newer use `Safe`/`Catch All`. Treat semantically, write the newer
-  option set.
+- **LinkedIn URL forms** — CSVs carry vanity vs numeric slugs, locale
+  subdomains (`uk.linkedin.com`), tracking params. The pipeline matches on the
+  slug after `/in/`; a row at `LI Not Found` with a plausible URL usually means
+  Apify could not resolve a variant — open the URL by hand.
+- **Honorific in the first-name column** — Seamless exports put `Dr.` /
+  `Pastor` in `First Name`. The clean step fixes this; a `Needs Attention`
+  "Name/company unclear" means even the LinkedIn name was ambiguous.
+- **Company size strings** drift (`2-10`, `10,001+ employees`); the pipeline
+  buckets them. Blank `Company Size` means unparseable, not an error.
+- **Reoon statuses** — `safe` → Safe, `catch_all` → Catch All (usable, lower
+  confidence), `role_account`, `disposable`/`invalid`/`spamtrap`/`disabled` →
+  not usable, `unknown` → Unknown (often credit exhausted when many at once).
+- **Airtable `Email Status` enum drift** — old rows show `Valid` / `Accept
+  All`; read them as Safe / Catch All.
+- **Fabricated email** — legacy GHL pushes synthesised
+  `first_last@noemail.com.invalid` when no real email existed. Never treat one
+  as contactable.
 
 ## Run-discovered learnings
 
