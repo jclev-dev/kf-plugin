@@ -7,8 +7,8 @@ Private Claude Code plugin holding Kingdom Factor's internal skills. It is the
 
 | Skill | Purpose |
 |---|---|
-| `kf-prospecting` | The coach prospecting pipeline runbook: ingest a CSV/Excel of prospects, scrape LinkedIn, judge fit, research, draft outreach, verify email, push to GoHighLevel / Instantly — or any partial slice. Owns Airtable as the source of truth; calls the four `KF Tool:` n8n workflows. |
-| `kf-n8n-ops` | Diagnose / validate / recreate the four `KF Tool:` n8n workflows when a tool fails or before first-run setup. |
+| `kf-prospecting` | The coach prospecting pipeline runbook: ingest a CSV/Excel of prospects, scrape LinkedIn, judge fit, research, draft outreach, verify email, push to GoHighLevel / Instantly — or any partial slice. Owns Airtable as the source of truth; scrapes by calling the Apify Actor directly, and calls the three `KF Tool:` n8n workflows for the rest. |
+| `kf-n8n-ops` | Diagnose / validate / recreate the three `KF Tool:` n8n workflows when a tool fails or before first-run setup. (Scraping is not among them — it runs directly against Apify.) |
 | `kf-marketing-manager` | Plain-English coach marketing reports for KF owners and coaches ("how's Mark doing", "how's everyone doing", "who's slipping"). **Read & advise only** — reads synced GoHighLevel data through the kingdom-factor app's hosted, OAuth-protected remote MCP connector; access is scoped to the signed-in user's KF role (admin = full roster, coach = own marketing only); never writes to GHL or the app. |
 
 Everyone uses the **same shared KF n8n + Airtable**, so all backend IDs are
@@ -17,12 +17,22 @@ per-machine requirements are the connectors below.
 
 ## Prerequisites (per machine)
 
-1. **KF n8n MCP connector** — added in Claude Code so the skills can call
+1. **Apify MCP connector** — for LinkedIn scraping in `kf-prospecting`. Add it
+   once in the Claude app under **Settings → Connectors → Add custom
+   connector**:
+
+   - **Remote MCP server URL:**
+     `https://mcp.apify.com/?tools=actors,docs,runs,storage,tasks,dev_fusion/Linkedin-Profile-Scraper`
+
+   Auth is **OAuth on first connect** — no API token to paste, none belongs in
+   any config. Scraping is billed to the signed-in Apify account, per profile
+   ($10 / 1,000). The skill only ever runs the one Actor.
+2. **KF n8n MCP connector** — added in Claude Code so the skills can call
    `execute_workflow`. Confirm by listing/searching workflows.
    (`kf-prospecting`, `kf-n8n-ops`.)
-2. **Airtable access** to base `appB3GpIQaGaRVrsC` ("Kingdom Factor").
+3. **Airtable access** to base `appB3GpIQaGaRVrsC` ("Kingdom Factor").
    (`kf-prospecting`.)
-3. **kingdom-factor remote MCP connector** — for `kf-marketing-manager`. It is
+4. **kingdom-factor remote MCP connector** — for `kf-marketing-manager`. It is
    **not bundled**; it is the kingdom-factor app's hosted endpoint. Add it once
    per user in the Claude app under **Settings → Connectors → Add custom
    connector**:
@@ -67,17 +77,21 @@ in that folder and re-run `/plugin install` (or the Claude Code update flow).
 After installing, reload Claude Code and confirm `kf-prospecting`,
 `kf-n8n-ops`, and `kf-marketing-manager` appear in the available skills. For
 `kf-marketing-manager`, add the kingdom-factor remote connector and sign in
-per Prerequisites #3 before first use.
+per Prerequisites #4 before first use.
 
 ## One-time n8n setup (do this once, in the n8n UI)
 
-The four `KF Tool:` workflows ship inactive and uncredentialed (the n8n API
+The three `KF Tool:` workflows ship inactive and uncredentialed (the n8n API
 cannot attach credentials). **Full, authoritative steps live in the skill** at
 `skills/kf-prospecting/references/setup.md` (sections 2–3) — follow that, do not
-rely on a summary. In short: activate the four workflows, enable "Available in
-MCP" on each, and attach the existing Apify / Reoon / GoHighLevel / Instantly
+rely on a summary. In short: activate the three workflows, enable "Available in
+MCP" on each, and attach the existing Reoon / GoHighLevel / Instantly
 credentials to the named nodes. The six original legacy workflows are the
 preserved fallback and must never be touched.
+
+`KF Tool: Scrape LinkedIn` (`8lCOtgzuFSE5rSUE`) is **retired and deactivated** —
+scraping calls the Apify Actor directly via the Apify connector. Do not
+reactivate it.
 
 ## Recommended companion installs
 
@@ -111,6 +125,7 @@ promote broadly-true ones into the corresponding shipped
 ```
 kf-plugin/
 ├── .claude-plugin/{plugin.json, marketplace.json}
+├── CONTEXT.md                     # shared vocabulary (glossary only)
 ├── skills/
 │   ├── kf-prospecting/{SKILL.md, references/*.md, learnings.md}
 │   ├── kf-n8n-ops/SKILL.md

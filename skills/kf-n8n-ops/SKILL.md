@@ -1,28 +1,34 @@
 ---
 name: kf-n8n-ops
 description: >-
-  Diagnose, repair, validate, or recreate the four Kingdom Factor n8n tool
-  workflows that the kf-prospecting pipeline depends on (Scrape LinkedIn, Verify
-  Email, GHL Push Contact, Instantly Add Lead). Use this whenever a KF tool call
-  fails or misbehaves — "the scrape tool stopped returning data", "GHL push is
-  erroring", "verify email returns nothing", "the prospecting run can't reach
-  the n8n tools", "recreate the KF n8n tools", "a tool isn't showing up in MCP",
-  or any auth/credential/availability problem with the KF tool workflows. Also
-  use before first-run setup to confirm the four workflows are activated,
-  MCP-exposed, and credentialed. Requires the KF n8n MCP connector.
+  Diagnose, repair, validate, or recreate the three Kingdom Factor n8n tool
+  workflows that the kf-prospecting pipeline depends on (Verify Email, GHL Push
+  Contact, Instantly Add Lead). Use this whenever a KF tool call fails or
+  misbehaves — "GHL push is erroring", "verify email returns nothing", "the
+  prospecting run can't reach the n8n tools", "recreate the KF n8n tools", "a
+  tool isn't showing up in MCP", or any auth/credential/availability problem
+  with the KF tool workflows. Also use before first-run setup to confirm the
+  three workflows are activated, MCP-exposed, and credentialed. Requires the KF
+  n8n MCP connector. Does **not** cover LinkedIn scraping — that no longer runs
+  through n8n; it calls the Apify Actor directly (see kf-prospecting).
 ---
 
 # KF n8n Tool Ops
 
-Operational skill for keeping the four `KF Tool:` n8n workflows healthy. These
+Operational skill for keeping the three `KF Tool:` n8n workflows healthy. These
 are the only n8n workflows `kf-prospecting` calls. This skill does **not** run
 the prospecting pipeline — it keeps its tools working.
 
-## The four tool workflows
+**Scraping is out of scope.** `KF Tool: Scrape LinkedIn` (`8lCOtgzuFSE5rSUE`)
+is retired and deactivated; `kf-prospecting` now calls the Apify Actor
+`dev_fusion/linkedin-profile-scraper` directly through the Apify MCP connector.
+A scrape problem is an Apify or connector problem, never an n8n one — do not
+diagnose, repair, or reactivate that workflow.
+
+## The three tool workflows
 
 | Tool | Workflow ID | Calls |
 |---|---|---|
-| KF Tool: Scrape LinkedIn | `8lCOtgzuFSE5rSUE` | Apify `dev_fusion~linkedin-profile-scraper` |
 | KF Tool: Verify Email | `V0EoKHXbdmk7g6au` | Reoon `emailverifier.reoon.com` |
 | KF Tool: GHL Push Contact | `otarDiS3anrAKzaC` | GHL locationToken → contacts/upsert → notes |
 | KF Tool: Instantly Add Lead | `BwbeD81BHGyz7fbh` | Instantly `lead/addToCampaign` |
@@ -48,7 +54,6 @@ credential, not a code bug. A null `http_status` with a clear message → inspec
 2. **Auth error (401/403, or `error.step: token` for GHL)?** A credential is
    unattached or wrong. The n8n API cannot set credentials — they are attached
    manually in the n8n UI. Required attachments:
-   - Scrape LinkedIn → **Apify** httpQueryAuth (`QpZAvL0bT663AITz`)
    - Verify Email → **Reoon** httpQueryAuth (`v4mnEAmfrzCkXYeC`)
    - GHL Push Contact (Get Location Token / Upsert Contact / Create Note) →
      **GoHighLevel** OAuth (`9gatP0eYzl6hugXl`)
@@ -59,7 +64,8 @@ credential, not a code bug. A null `http_status` with a clear message → inspec
 4. **Bad/empty `data` but `ok:true`?** The upstream API shape may have drifted
    (e.g. Apify field renamed, Reoon status string changed). Inspect `error`/raw
    and the upstream node’s response; record the drift in the kf-prospecting
-   operator-side learnings so the pipeline’s cleaning logic adapts.
+   operator-side learnings so the pipeline’s cleaning logic adapts. (Apify field
+   drift is no longer an n8n concern — it surfaces directly in kf-prospecting.)
 
 ## Inspecting / validating a workflow
 
