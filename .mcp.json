@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "kf-n8n": {
+      "type": "http",
+      "url": "https://kingdomfactor.app.n8n.cloud/mcp-server/http"
+    },
+    "kf-airtable": {
+      "type": "http",
+      "url": "https://mcp.airtable.com/mcp"
+    },
+    "kf-apify": {
+      "type": "http",
+      "url": "https://mcp.apify.com/?tools=actors,docs,runs,storage,tasks,dev_fusion/Linkedin-Profile-Scraper"
+    }
+  }
+}

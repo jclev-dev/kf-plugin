@@ -24,6 +24,19 @@ play, say "pipeline run" and "Actor run".
 **Scope** — how far through the Stages the operator wants this pipeline run to
 go. Scope is the operator's instruction; Status is the Prospect's reality.
 
+**Master run** — one execution of the n8n pipeline over one batch of
+Prospects, started from one trigger. A Master run owns every Stage for its
+batch; nothing outside it advances a Prospect's Status.
+
+**Needs Attention** — the Status of a Prospect that a Master run could not
+carry forward, together with the plain-English reason. It is the only way a
+Prospect leaves the pipeline without finishing. A Prospect never disappears
+silently.
+
+**Operator console** — the Claude conversation an operator uses to ask what
+happened, why a Prospect is stuck, and to fix or re-run single Prospects. The
+console explains and repairs; it does not process batches.
+
 ## Data sources
 
 **Actor** — an Apify web-data automation, called directly through the Apify MCP
@@ -43,6 +56,15 @@ never touch Airtable and never call each other.
 **Envelope** — the `{ok, data, error}` shape that **n8n tools** return. It is a
 property of the n8n tools alone. Apify does not return an envelope, so the
 scrape Stage has its own failure vocabulary.
+
+**Verification Task** — a batch of candidate emails handed to the verification
+service as one unit, identified by a task id. A Verification Task is paid for
+when it is created, not when it is read, and it outlives the session that
+created it. Losing its id does not cancel it — it only means paying again.
+
+**Candidate email** — an address a Prospect *might* be reachable at, before
+verification has an opinion. A Prospect can have several; at most one becomes
+the Prospect's email.
 
 ## Judgement
 
