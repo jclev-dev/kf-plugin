@@ -64,10 +64,24 @@ If one is missing, say which and stop. Nothing else is needed.
    **Before firing a run of more than 25 rows, state the count and the rough
    cost** (about $0.02 per row all-in; Apify adds about $0.01 per row that
    still needs scraping) and that Good Fits will be sent for real.
-6. **Starting a fresh list** is the operator's job through the form
-   `https://kingdomfactor.app.n8n.cloud/form/prospect-pipeline`: a CSV with a
-   `LinkedIn URL` column (`Email` optional), pick the coach, type their email.
-   Give them the link and those two rules.
+6. **Starting a fresh list.** Two ways; both end in the same engine run and
+   report email.
+   - **Form (default, cheapest):** give them
+     `https://kingdomfactor.app.n8n.cloud/form/prospect-pipeline`. CSV with a
+     `LinkedIn URL` column (`Email` optional), pick the coach, type their
+     email. Done.
+   - **CSV attached to the chat:** read it; map columns loosely (`LinkedIn
+     URL`/`LinkedIn`/`Profile URL`; `Email`/`Work Email`; `First Name`;
+     `Last Name`; `Company`; `Title`). Drop rows with no LinkedIn URL and list
+     them back. Look up the coach's record in `Coaches` by `Full Name` and the
+     campaign in `Campaigns`. Query `Prospects` for existing rows with the same
+     LinkedIn URL (normalise: lowercase, strip `https://`, `www.`, trailing
+     slash, query string) and skip duplicates, saying how many. Create the rest
+     with `create_records_for_table`, 50 per call, fields: `LinkedIn URL`,
+     `Seamless Email`, `First Name`, `Last Name`, `Company`, `Job Title`,
+     `Coach` (linked id), `Campaign` (linked id), `Status` = `New`,
+     `Re-run` = true. Then step 5. State the row count and cost first (step 5
+     rule). Names need not be clean; the engine fixes them.
 7. **Changing who counts as a fit or how emails sound** is done in Airtable,
    not n8n: `Campaigns.ICP Criteria` (fit rules, including that LDS counts as
    Christian evidence) and `Offers.Outreach System Prompt` / `Subject Line`

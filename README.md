@@ -37,9 +37,10 @@ per Prerequisites #4 before first use.
 
 ## The pipeline (for operators)
 
-Upload form: `https://kingdomfactor.app.n8n.cloud/form/prospect-pipeline`.
-The CSV needs a `LinkedIn URL` column; `Email` is optional; names need not be
-clean. One report email per run; Good Fits are sent automatically. Rows a
+Upload form: `https://kingdomfactor.app.n8n.cloud/form/prospect-pipeline`,
+or attach the CSV to the Claude chat and say which coach it is for (Claude
+creates the rows, skips duplicates, and starts the run). The CSV needs a
+`LinkedIn URL` column; `Email` is optional; names need not be clean. One report email per run; Good Fits are sent automatically. Rows a
 human must look at land at Airtable `Status = Needs Attention` with the reason
 in `Attention Reason`. Everything after that is a conversation with Claude:
 "re-run Josh R and Mary for Matt", "Josh is a good fit, send him", "what's

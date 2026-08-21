@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 — 2026-08-21
+
+- Fresh lists can be started by attaching the CSV to the chat (Claude creates
+  the rows, dedupes by LinkedIn URL, starts the run). The form remains the
+  default.
+
 ## 1.0.0 — 2026-08-21
 
 The pipeline is live and sending. Breaking relative to 0.5.0 in how operators
