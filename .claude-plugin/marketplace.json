@@ -8,8 +8,8 @@
     {
       "name": "kingdom-factor",
       "source": "./",
-      "description": "Kingdom Factor internal skill suite: kf-prospecting (coach prospecting pipeline runbook), kf-n8n-ops (KF n8n tool-workflow maintenance), and kf-marketing-manager (plain-English coach marketing reports). Requires the Apify MCP connector (LinkedIn scraping) plus the shared KF n8n MCP + Airtable connectors; kf-marketing-manager uses the kingdom-factor app's hosted OAuth-protected remote MCP connector (added per-user in the Claude app).",
-      "version": "0.4.0",
+      "description": "Kingdom Factor internal skill suite: kf-prospecting (operator console for the n8n prospect pipeline: what is stuck, fix a row, start a run), kf-n8n-ops (keep the pipeline healthy; Tier 1 repairs the operator may do, Tier 2 changes go to Jordan), and kf-marketing-manager (plain-English coach marketing reports). Requires the shared KF n8n MCP + Airtable connectors; kf-marketing-manager uses the kingdom-factor app's hosted OAuth-protected remote MCP connector (added per-user in the Claude app).",
+      "version": "1.0.0",
       "author": {
         "name": "Eighty20 Software"
       },

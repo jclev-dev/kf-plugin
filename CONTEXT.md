@@ -17,13 +17,6 @@ makes a run resumable.
 to the Prospect, not to the run: two Prospects in the same run are routinely at
 different Statuses.
 
-**Run** *(pipeline sense)* — one invocation of the prospecting skill over a list
-of Prospects. Distinct from an **Actor run** (below). When both senses are in
-play, say "pipeline run" and "Actor run".
-
-**Scope** — how far through the Stages the operator wants this pipeline run to
-go. Scope is the operator's instruction; Status is the Prospect's reality.
-
 **Master run** — one execution of the n8n pipeline over one batch of
 Prospects, started from one trigger. A Master run owns every Stage for its
 batch; nothing outside it advances a Prospect's Status.
@@ -34,13 +27,35 @@ Prospect leaves the pipeline without finishing. A Prospect never disappears
 silently.
 
 **Operator console** — the Claude conversation an operator uses to ask what
-happened, why a Prospect is stuck, and to fix or re-run single Prospects. The
-console explains and repairs; it does not process batches.
+happened, why a Prospect is stuck, to fix rows, and to start runs. The console
+explains, repairs, and starts; it does not process batches.
+
+**Console workflow** — the single-trigger n8n workflow the console calls to
+start a Master run. It exists only because the engine has two triggers and a
+chat session can reach just the first one.
+
+**Sent** — the end state of a Good Fit. The pipeline sends without a human
+review step: a Safe email goes to Instantly; anything else becomes a CRM
+contact with a note for a LinkedIn connection.
+
+**Tier 1 change** — an n8n edit that restores or retries without changing what
+the pipeline decides or writes: roll back, re-publish, re-bind a credential,
+add a coach, re-run, raise a timeout. An operator may make it alone.
+
+**Tier 2 change** — an n8n edit that changes what the pipeline does for every
+future row: prompts, models, wiring, send rules, schema. Goes to Jordan. The
+test is "is this about one person, or about the workflow?" — one person is
+never an n8n change.
+
+**Scraper outage** — a Master run in which the LinkedIn scraper accepted valid
+URLs and returned nothing, or almost nothing, in seconds. Rows are parked as
+Needs Attention with that reason; they need a re-run, not an edit.
 
 ## Data sources
 
-**Actor** — an Apify web-data automation, called directly through the Apify MCP
-connector. Kingdom Factor uses one: the LinkedIn profile scraper.
+**Actor** — an Apify web-data automation. Kingdom Factor uses one, the
+LinkedIn profile scraper, called only from inside the engine with the n8n
+credential. Nothing calls it from a chat.
 
 **Actor run** — one execution of an Actor over a batch of profile URLs. Billed
 per result, so an Actor run is a thing with a price, not a free retry.
@@ -49,18 +64,10 @@ per result, so an Actor run is a thing with a price, not a free retry.
 dataset item is **raw**: the skill cleans it, the Actor never does. An item is
 either an enriched profile or a failure stub; both are dataset items.
 
-**n8n tool** — a single-purpose n8n workflow that makes one credentialed
-external call and returns a fixed envelope. n8n tools are pure functions: they
-never touch Airtable and never call each other.
-
-**Envelope** — the `{ok, data, error}` shape that **n8n tools** return. It is a
-property of the n8n tools alone. Apify does not return an envelope, so the
-scrape Stage has its own failure vocabulary.
-
-**Verification Task** — a batch of candidate emails handed to the verification
-service as one unit, identified by a task id. A Verification Task is paid for
-when it is created, not when it is read, and it outlives the session that
-created it. Losing its id does not cancel it — it only means paying again.
+**Research** — the public footprint of a Prospect (podcasts, articles, talks,
+books, press) found by a web-search model inside the engine, stored as readable
+text with sources, and used as the opening hook of the draft. Research is
+nice-to-have: when it finds nothing the row still proceeds.
 
 **Candidate email** — an address a Prospect *might* be reachable at, before
 verification has an opinion. A Prospect can have several; at most one becomes
@@ -69,11 +76,19 @@ the Prospect's email.
 ## Judgement
 
 **Clean** — to repair and normalise a raw value into something safe to write to
-Airtable. Cleaning is the skill's judgement, and it either succeeds or the row
-is flagged for a human. Silently coercing or dropping a value is not cleaning.
+Airtable. Cleaning is the engine's judgement. Only an unclear **first name** on
+a Good Fit flags the row for a human; a missing last name or company is fine.
 
-**Flag for a human** — to record on the row that a value could not be cleaned
-confidently, with the specific reason. The opposite of a silent default.
+**Flag for a human** — to record on the row that something could not be
+resolved confidently, with the specific reason. The opposite of a silent
+default. Rows that are Not a Fit are never flagged; nobody contacts them.
+
+**Human override** — a `Fit Status` set by an operator before a re-run. A human
+Good Fit survives the re-run and is sent; a human Not a Fit stops the row.
+
+**ICP Criteria / Offer voice** — the Airtable text that defines who counts as a
+fit and how outreach sounds. Operators own and edit it; the engine reads it on
+every run. It is business copy, not configuration.
 
 **Fabricated email** — a placeholder address synthesised only so a CRM upsert
 can succeed. A fabricated email is never contactable and never real.
