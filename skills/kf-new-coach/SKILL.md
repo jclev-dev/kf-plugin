@@ -80,10 +80,17 @@ Then handle what the audit found:
 
 - **`blockers` is not empty** → read them out and stop. Each one means a human
   has to decide something before a write is safe.
-- **`crm.custom_values.conflicts` is not empty** → for each field, name the
-  value that is in the CRM and the value she gave, and ask which is right.
-  Never pick for her. Collect the `field_key` of every field where she chooses
-  her new value; that list is `overwrite`.
+- **`crm.custom_values.conflicts` or `airtable.conflicts` is not empty** → for
+  each field, name the value that is stored and the value she gave, and ask
+  which is right. Never pick for her. Every conflict row carries the key to
+  pass back: a CRM custom value uses its `field_key`, an Airtable field uses
+  `overwrite_key` (`airtable:Last Name`). Collect the key of every field where
+  she chooses her new value; that list is `overwrite`.
+
+  This rule is the same in all three systems. Apply fills a blank without
+  asking, leaves a value that already agrees, and overwrites a disagreement
+  only when the key is in `overwrite`. Do not work around it by sending a
+  field twice or by editing Airtable yourself.
 - **`airtable.match_count` is more than one, or the match was on name only** →
   show her the candidates and ask which row is the coach, or whether to make a
   new one. Her answer becomes `airtable_record_id`.
@@ -112,8 +119,9 @@ Call `vAkrIdRhP0sajN72` with the same coach fields plus:
 
 ### 6. Report what happened, and what did not
 
-Apply returns `written`, `not_written`, and `left_for_a_human`. Read both
-lists out. **Never soften `not_written`.** There is no rollback across three
+Apply returns `written`, `not_written`, and `left_for_a_human` (which has two
+parts, `custom_values` and `airtable`). Read the first two lists out, and say
+plainly how many fields were left alone because they disagree. **Never soften `not_written`.** There is no rollback across three
 vendors, so a partial run is normal and the operator has to know exactly which
 part is missing. The same summary is appended to the `Notes` field on the
 Airtable Coaches row, so it survives this chat.

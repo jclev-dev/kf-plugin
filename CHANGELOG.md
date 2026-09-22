@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.1.1 — 2026-09-22
+
+Fixes found by running the workflows against live systems. Everything below
+validated cleanly and read plausibly; only real API calls exposed it.
+
+- **The blank-only rule now holds in all three systems.** It leaked on the
+  Airtable write, which replaced the row with whatever it was given — the first
+  live Apply corrected a coach's last name without anyone being asked. Airtable
+  fields now fill blanks, keep values that agree, and overwrite a disagreement
+  only when the operator names it as `airtable:<Field>`. `Notes` is still
+  appended, because appending is not overwriting.
+- **The GoHighLevel user search wants `emails` as a string**, not an array. It
+  was returning 422, and `neverError` passed the error body on as a result, so
+  an audit reported "no user with this email" while flying blind. A successful
+  search returns a `users` array; anything else is a failed lookup and a
+  blocker, and in Apply a hard stop before any write. This was the defect that
+  would have created duplicate sub-accounts.
+- **A user's sub-accounts live at `user.roles.locationIds`.** Reading
+  `user.locationIds` made an existing coach look new.
+- **`fieldKey` comes back wrapped**: `"{{ custom_values.coach_state }}"`. Exact
+  matching found nothing, so a coach with 19 populated custom values compared
+  as having none and Apply would have written nothing and reported success.
+- The audit now reports Airtable field disagreements, trims the prospect list
+  out of Airtable candidates, and flags when Airtable and the CRM hold
+  different sub-account ids.
+- `left_for_a_human` in the Apply result now has two parts, `custom_values` and
+  `airtable`.
+
 ## 1.1.0 — 2026-09-22
 
 - **New skill `kf-new-coach`.** Onboards one coach across the GoHighLevel CRM,
