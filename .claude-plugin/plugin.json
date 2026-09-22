@@ -1,7 +1,7 @@
 {
   "name": "kingdom-factor",
-  "version": "1.0.1",
-  "description": "Kingdom Factor internal skill suite. kf-prospecting: operator console for the n8n prospect pipeline (what is stuck and why, fix a row, approve a person, start a run). kf-n8n-ops: keep the pipeline healthy \u2014 Tier 1 repairs the operator may do alone, Tier 2 changes go to Jordan. kf-marketing-manager: plain-English coach marketing reports via the kingdom-factor app's hosted, OAuth-protected, role-scoped remote MCP connector.",
+  "version": "1.1.1",
+  "description": "Kingdom Factor internal skill suite. kf-prospecting: operator console for the n8n prospect pipeline (what is stuck and why, fix a row, approve a person, start a run). kf-n8n-ops: keep the pipeline healthy \u2014 Tier 1 repairs the operator may do alone, Tier 2 changes go to Jordan. kf-marketing-manager: plain-English coach marketing reports via the kingdom-factor app's hosted, OAuth-protected, role-scoped remote MCP connector. kf-new-coach: onboard one coach across the GHL CRM, the Kingdom Factor platform and the Airtable Coaches index, as an audit the operator reads and then an apply she confirms.",
   "author": {
     "name": "Eighty20 Software"
   },

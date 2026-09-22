@@ -97,3 +97,42 @@ can succeed. A fabricated email is never contactable and never real.
 down so the next run is less brittle. A **seed** learning ships with the plugin
 and is read-only; a **run-discovered** learning is operator-side and survives
 plugin updates.
+
+## Coaches
+
+**Coach** — one Kingdom Factor coach. A Coach is never a Prospect: a Prospect
+is someone a Coach is reaching out to. One Coach lives in three systems at
+once — the CRM, the platform, and Airtable — and is the same person in all
+three.
+
+**KF email** — the coach's `@kingdomfactor.us` address. It is the identity of
+a Coach everywhere: the CRM login, the platform login, and the key every
+system is matched on. A human creates it in Google Workspace before onboarding
+starts; nothing in Kingdom Factor can create it.
+
+**Sub-account** — the CRM location that belongs to one Coach. It holds that
+coach's contacts, funnels, and calendars. Airtable calls its id `CRM ID`; the
+platform calls it `ghl_location_id`. One Coach has exactly one Sub-account.
+
+**Custom value** — a named variable inside one Sub-account. The snapshot's
+funnels and emails read it, so a blank or wrong Custom value shows up as a
+blank or wrong word on a page the coach's audience sees.
+
+**Onboarding run** — one pass over one Coach that brings the CRM, the platform,
+and Airtable into agreement. A run that finds nothing creates the Coach; a run
+that finds a Coach already there fills what is missing. Creating is the empty
+case of the same job, not a different job.
+
+**Coach index** — the Airtable `Coaches` table, seen correctly: a list that
+says which Coaches exist and what their `CRM ID` is. It is not where a Coach's
+details live. A field is added to it only when a human editing that field
+would change something real; otherwise the field would invite an edit that
+goes nowhere.
+
+**Audit** — the read-only half of an Onboarding run. It reads all three
+systems and reports what is there, what is missing, and what disagrees. An
+Audit writes nothing, so it is always safe to run.
+
+**Apply** — the writing half of an Onboarding run. It runs only after a human
+sees the Audit and agrees to it. Apply fills what is blank; it never
+overwrites a filled value that a human has not ruled on.

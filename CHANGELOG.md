@@ -1,5 +1,61 @@
 # Changelog
 
+## 1.1.1 — 2026-09-22
+
+Fixes found by running the workflows against live systems. Everything below
+validated cleanly and read plausibly; only real API calls exposed it.
+
+- **The blank-only rule now holds in all three systems.** It leaked on the
+  Airtable write, which replaced the row with whatever it was given — the first
+  live Apply corrected a coach's last name without anyone being asked. Airtable
+  fields now fill blanks, keep values that agree, and overwrite a disagreement
+  only when the operator names it as `airtable:<Field>`. `Notes` is still
+  appended, because appending is not overwriting.
+- **The GoHighLevel user search wants `emails` as a string**, not an array. It
+  was returning 422, and `neverError` passed the error body on as a result, so
+  an audit reported "no user with this email" while flying blind. A successful
+  search returns a `users` array; anything else is a failed lookup and a
+  blocker, and in Apply a hard stop before any write. This was the defect that
+  would have created duplicate sub-accounts.
+- **A user's sub-accounts live at `user.roles.locationIds`.** Reading
+  `user.locationIds` made an existing coach look new.
+- **`fieldKey` comes back wrapped**: `"{{ custom_values.coach_state }}"`. Exact
+  matching found nothing, so a coach with 19 populated custom values compared
+  as having none and Apply would have written nothing and reported success.
+- The audit now reports Airtable field disagreements, trims the prospect list
+  out of Airtable candidates, and flags when Airtable and the CRM hold
+  different sub-account ids.
+- `left_for_a_human` in the Apply result now has two parts, `custom_values` and
+  `airtable`.
+
+## 1.1.0 — 2026-09-22
+
+- **New skill `kf-new-coach`.** Onboards one coach across the GoHighLevel CRM,
+  the Kingdom Factor platform, and the Airtable Coaches index. It replaces the
+  Bubble form that called the retired `KF: Create Subaccount V2`, which was not
+  on the live n8n instance at all.
+- **One job, two halves.** `KF Coach: Audit` (`ll1R8FtysX9SU63C`) reads all
+  three systems and writes nothing. `KF Coach: Apply` (`vAkrIdRhP0sajN72`)
+  writes, and refuses to run without `confirmed: true`. Creating a coach is the
+  case where the audit found nothing; there is no separate "repair" mode.
+- **Apply fills blanks and never overwrites silently.** A custom value that
+  disagrees with what the operator gave is reported to her, and written only
+  when she names that field. Custom values render on public funnel pages.
+- **Three defects in V2 fixed:** the headshot custom value is no longer written
+  with the coach's state abbreviation; the Coach User ID lands in its own custom
+  value instead of whichever one came back first; the blind 60-second wait runs
+  only when a sub-account was actually created.
+- **Airtable `Coaches` gains no fields.** It is an index, not a store. A coach's
+  phone, LinkedIn, about-me, and microsite live in the CRM as custom values, so
+  an Airtable edit can never look like it propagated when it did not.
+- A new coach is created with `marketing_active` off, so an empty coach never
+  appears in the `kf-marketing-manager` portfolio report.
+- Glossary gains *Coach*, *KF email*, *Sub-account*, *Custom value*, *Coach
+  index*, *Audit*, *Apply*, *Onboarding run*. Reasoning in ADR 0003.
+- **Depends on a kingdom-factor app change**: `POST /api/imports/coaches` must
+  accept `ghl_location_id` and must stop blanking keys the payload omits.
+  Until that ships, every run correctly reports the platform link as missing.
+
 ## 1.0.1 — 2026-08-21
 
 - Fresh lists can be started by attaching the CSV to the chat (Claude creates
